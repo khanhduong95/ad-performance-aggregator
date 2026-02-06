@@ -12,18 +12,10 @@ var expectedHeader = []string{
 	"campaign_id", "impressions", "clicks", "spend", "conversions",
 }
 
-type csvProcessor struct{}
-
-// NewCSVProcessor returns a Processor that parses and aggregates
-// ad performance CSV data.
-func NewCSVProcessor() Processor {
-	return &csvProcessor{}
-}
-
-// Process streams the CSV from r line-by-line and returns aggregated
+// Aggregate streams the CSV from r row-by-row and returns aggregated
 // metrics keyed by campaign_id. Memory usage is proportional to the
 // number of distinct campaign IDs, not the input size.
-func (p *csvProcessor) Process(r io.Reader) (map[string]*CampaignMetrics, error) {
+func Aggregate(r io.Reader) (map[string]*CampaignMetrics, error) {
 	reader := csv.NewReader(r)
 	reader.ReuseRecord = true // reuse the backing array across Read calls
 
