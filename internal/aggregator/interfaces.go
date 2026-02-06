@@ -2,8 +2,8 @@ package aggregator
 
 import "io"
 
-// CSVProcessor reads and aggregates ad performance data from CSV input.
-type CSVProcessor interface {
+// Processor reads and aggregates ad performance data from input.
+type Processor interface {
 	Process(r io.Reader) (map[string]*CampaignMetrics, error)
 }
 

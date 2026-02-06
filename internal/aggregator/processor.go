@@ -14,9 +14,9 @@ var expectedHeader = []string{
 
 type csvProcessor struct{}
 
-// NewCSVProcessor returns a CSVProcessor that parses and aggregates
+// NewCSVProcessor returns a Processor that parses and aggregates
 // ad performance CSV data.
-func NewCSVProcessor() CSVProcessor {
+func NewCSVProcessor() Processor {
 	return &csvProcessor{}
 }
 

@@ -4,12 +4,12 @@ import "io"
 
 // Service orchestrates CSV processing and report generation.
 type Service struct {
-	processor CSVProcessor
+	processor Processor
 	writer    ReportWriter
 }
 
 // NewService creates a Service with the given processor and writer.
-func NewService(p CSVProcessor, w ReportWriter) *Service {
+func NewService(p Processor, w ReportWriter) *Service {
 	return &Service{processor: p, writer: w}
 }
 
