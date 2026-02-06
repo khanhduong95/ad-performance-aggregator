@@ -4,7 +4,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 )
 
@@ -13,17 +12,19 @@ var expectedHeader = []string{
 	"campaign_id", "impressions", "clicks", "spend", "conversions",
 }
 
-// Process streams the CSV at path line-by-line and returns aggregated
-// metrics keyed by campaign_id. Memory usage is proportional to the
-// number of distinct campaign IDs, not the file size.
-func Process(path string) (map[string]*CampaignMetrics, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, fmt.Errorf("open csv: %w", err)
-	}
-	defer f.Close()
+type csvProcessor struct{}
 
-	reader := csv.NewReader(f)
+// NewCSVProcessor returns a CSVProcessor that parses and aggregates
+// ad performance CSV data.
+func NewCSVProcessor() CSVProcessor {
+	return &csvProcessor{}
+}
+
+// Process streams the CSV from r line-by-line and returns aggregated
+// metrics keyed by campaign_id. Memory usage is proportional to the
+// number of distinct campaign IDs, not the input size.
+func (p *csvProcessor) Process(r io.Reader) (map[string]*CampaignMetrics, error) {
+	reader := csv.NewReader(r)
 	reader.ReuseRecord = true // reuse the backing array across Read calls
 
 	// --- read and validate header ---
@@ -51,7 +52,6 @@ func Process(path string) (map[string]*CampaignMetrics, error) {
 		lineNum++
 
 		if err := accumulateRow(metrics, record, colIndex, lineNum); err != nil {
-			// TODO: make error-on-bad-row vs skip-and-log configurable
 			return nil, err
 		}
 	}
@@ -119,8 +119,6 @@ func accumulateRow(metrics map[string]*CampaignMetrics, record []string, col col
 	if err != nil {
 		return fmt.Errorf("line %d: bad conversions %q: %w", lineNum, record[col.conversions], err)
 	}
-
-	// TODO: validate non-negative values
 
 	m, ok := metrics[campaignID]
 	if !ok {

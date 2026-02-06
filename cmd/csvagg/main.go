@@ -27,22 +27,26 @@ func main() {
 }
 
 func run(input, output string) error {
-	// TODO: validate input file exists and is readable before processing
+	f, err := os.Open(input)
+	if err != nil {
+		return fmt.Errorf("open input: %w", err)
+	}
+	defer f.Close()
 
 	start := time.Now()
 	fmt.Fprintf(os.Stderr, "processing %s ...\n", input)
 
-	metrics, err := aggregator.Process(input)
+	svc := aggregator.NewService(
+		aggregator.NewCSVProcessor(),
+		aggregator.NewFileReportWriter(output),
+	)
+
+	metrics, err := svc.Run(f)
 	if err != nil {
 		return err
 	}
 
 	fmt.Fprintf(os.Stderr, "aggregated %d campaigns in %s\n", len(metrics), time.Since(start))
-
-	if err := aggregator.WriteReports(metrics, output); err != nil {
-		return err
-	}
-
 	fmt.Fprintf(os.Stderr, "reports written to %s/\n", output)
 	return nil
 }

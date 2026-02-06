@@ -3,6 +3,7 @@ package aggregator
 import (
 	"encoding/csv"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -11,19 +12,47 @@ import (
 
 const topN = 10
 
-// WriteReports produces top10_ctr.csv and top10_cpa.csv inside outputDir.
-func WriteReports(metrics map[string]*CampaignMetrics, outputDir string) error {
-	if err := os.MkdirAll(outputDir, 0o755); err != nil {
+type fileReportWriter struct {
+	outputDir string
+}
+
+// NewFileReportWriter returns a ReportWriter that writes CSV reports
+// to the given directory.
+func NewFileReportWriter(outputDir string) ReportWriter {
+	return &fileReportWriter{outputDir: outputDir}
+}
+
+// WriteReports produces top10_ctr.csv and top10_cpa.csv inside the output directory.
+func (w *fileReportWriter) WriteReports(metrics map[string]*CampaignMetrics) error {
+	if err := os.MkdirAll(w.outputDir, 0o755); err != nil {
 		return fmt.Errorf("create output dir: %w", err)
 	}
 
 	all := metricsSlice(metrics)
 
-	if err := writeTopCTR(all, outputDir); err != nil {
+	ctrPath := filepath.Join(w.outputDir, "top10_ctr.csv")
+	if err := writeToFile(ctrPath, all, writeTopCTR); err != nil {
 		return err
 	}
-	if err := writeTopCPA(all, outputDir); err != nil {
+
+	cpaPath := filepath.Join(w.outputDir, "top10_cpa.csv")
+	if err := writeToFile(cpaPath, all, writeTopCPA); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// writeToFile creates a file at path and delegates writing to fn.
+func writeToFile(path string, all []*CampaignMetrics, fn func(io.Writer, []*CampaignMetrics) error) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("create %s: %w", path, err)
+	}
+	defer f.Close()
+
+	if err := fn(f, all); err != nil {
+		return fmt.Errorf("write %s: %w", path, err)
 	}
 	return nil
 }
@@ -37,9 +66,8 @@ func metricsSlice(m map[string]*CampaignMetrics) []*CampaignMetrics {
 	return s
 }
 
-// writeTopCTR writes the top-10 campaigns by CTR (descending).
-func writeTopCTR(all []*CampaignMetrics, outputDir string) error {
-	// TODO: consider filtering out campaigns with zero impressions
+// writeTopCTR writes the top-10 campaigns by CTR (descending) to w.
+func writeTopCTR(w io.Writer, all []*CampaignMetrics) error {
 	sort.Slice(all, func(i, j int) bool {
 		return all[i].CTR() > all[j].CTR()
 	})
@@ -49,13 +77,12 @@ func writeTopCTR(all []*CampaignMetrics, outputDir string) error {
 		n = len(all)
 	}
 
-	path := filepath.Join(outputDir, "top10_ctr.csv")
-	return writeCSV(path, ctrHeader, all[:n], ctrRow)
+	return writeCSV(w, ctrHeader, all[:n], ctrRow)
 }
 
-// writeTopCPA writes the top-10 campaigns by CPA (ascending),
+// writeTopCPA writes the top-10 campaigns by CPA (ascending) to w,
 // excluding campaigns with zero conversions.
-func writeTopCPA(all []*CampaignMetrics, outputDir string) error {
+func writeTopCPA(w io.Writer, all []*CampaignMetrics) error {
 	// Filter to campaigns that actually have conversions.
 	eligible := make([]*CampaignMetrics, 0, len(all))
 	for _, m := range all {
@@ -73,8 +100,7 @@ func writeTopCPA(all []*CampaignMetrics, outputDir string) error {
 		n = len(eligible)
 	}
 
-	path := filepath.Join(outputDir, "top10_cpa.csv")
-	return writeCSV(path, cpaHeader, eligible[:n], cpaRow)
+	return writeCSV(w, cpaHeader, eligible[:n], cpaRow)
 }
 
 var ctrHeader = []string{"campaign_id", "impressions", "clicks", "ctr"}
@@ -98,28 +124,19 @@ func cpaRow(m *CampaignMetrics) []string {
 	}
 }
 
-// writeCSV is a small helper to write a header + N data rows.
-func writeCSV(path string, header []string, rows []*CampaignMetrics, toRow func(*CampaignMetrics) []string) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return fmt.Errorf("create %s: %w", path, err)
-	}
-	defer f.Close()
+// writeCSV writes a header + data rows to w.
+func writeCSV(w io.Writer, header []string, rows []*CampaignMetrics, toRow func(*CampaignMetrics) []string) error {
+	cw := csv.NewWriter(w)
 
-	w := csv.NewWriter(f)
-
-	if err := w.Write(header); err != nil {
-		return fmt.Errorf("write header to %s: %w", path, err)
+	if err := cw.Write(header); err != nil {
+		return fmt.Errorf("write header: %w", err)
 	}
 	for _, m := range rows {
-		if err := w.Write(toRow(m)); err != nil {
-			return fmt.Errorf("write row to %s: %w", path, err)
+		if err := cw.Write(toRow(m)); err != nil {
+			return fmt.Errorf("write row: %w", err)
 		}
 	}
 
-	w.Flush()
-	if err := w.Error(); err != nil {
-		return fmt.Errorf("flush %s: %w", path, err)
-	}
-	return nil
+	cw.Flush()
+	return cw.Error()
 }
