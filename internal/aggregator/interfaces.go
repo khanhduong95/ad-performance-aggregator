@@ -25,7 +25,4 @@ type MetricsStore interface {
 	// TopKByCPA returns the top k campaigns sorted by CPA ascending,
 	// excluding campaigns with zero conversions.
 	TopKByCPA(k int) []*CampaignMetrics
-
-	// Len returns the number of distinct campaigns in the store.
-	Len() int
 }

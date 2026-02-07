@@ -61,9 +61,6 @@ func TestService_Run(t *testing.T) {
 	if writer.store == nil {
 		t.Fatal("expected writer to receive store")
 	}
-	if writer.store.Len() != 1 {
-		t.Errorf("expected store to have 1 campaign, got %d", writer.store.Len())
-	}
 }
 
 func TestService_ProcessError(t *testing.T) {
