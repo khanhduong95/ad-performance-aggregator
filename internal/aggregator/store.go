@@ -52,10 +52,6 @@ func (s *InMemoryStore) TopKByCPA(k int) []*CampaignMetrics {
 	return eligible[:k]
 }
 
-func (s *InMemoryStore) Len() int {
-	return len(s.m)
-}
-
 func (s *InMemoryStore) all() []*CampaignMetrics {
 	result := make([]*CampaignMetrics, 0, len(s.m))
 	for _, v := range s.m {

@@ -16,11 +16,12 @@ camp1,500,25,50.00,5
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if store.Len() != 1 {
-		t.Fatalf("expected 1 campaign, got %d", store.Len())
+	all := store.TopKByCTR(100)
+	if len(all) != 1 {
+		t.Fatalf("expected 1 campaign, got %d", len(all))
 	}
 
-	m := findByCampaignID(store.TopKByCTR(100), "camp1")
+	m := findByCampaignID(all, "camp1")
 	if m == nil {
 		t.Fatal("camp1 not found")
 	}
@@ -50,11 +51,10 @@ camp3,3000,150,300.00,30
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if store.Len() != 3 {
-		t.Fatalf("expected 3 campaigns, got %d", store.Len())
-	}
-
 	all := store.TopKByCTR(100)
+	if len(all) != 3 {
+		t.Fatalf("expected 3 campaigns, got %d", len(all))
+	}
 	for _, id := range []string{"camp1", "camp2", "camp3"} {
 		if findByCampaignID(all, id) == nil {
 			t.Errorf("campaign %s not found", id)
@@ -105,8 +105,8 @@ func TestCSVProcessor_HeaderOnly(t *testing.T) {
 	if err := p.Process(strings.NewReader(input), store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if store.Len() != 0 {
-		t.Errorf("expected 0 campaigns, got %d", store.Len())
+	if n := len(store.TopKByCTR(100)); n != 0 {
+		t.Errorf("expected 0 campaigns, got %d", n)
 	}
 }
 

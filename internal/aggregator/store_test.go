@@ -5,26 +5,26 @@ import (
 	"testing"
 )
 
-func TestInMemoryStore_AddAndLen(t *testing.T) {
+func TestInMemoryStore_AddAndCount(t *testing.T) {
 	s := NewInMemoryStore()
-	if s.Len() != 0 {
-		t.Fatalf("expected 0, got %d", s.Len())
+	if n := len(s.TopKByCTR(100)); n != 0 {
+		t.Fatalf("expected 0, got %d", n)
 	}
 
 	s.Add("camp1", 100, 10, 50.0, 5)
-	if s.Len() != 1 {
-		t.Fatalf("expected 1, got %d", s.Len())
+	if n := len(s.TopKByCTR(100)); n != 1 {
+		t.Fatalf("expected 1, got %d", n)
 	}
 
-	// Adding to the same campaign does not increase Len.
+	// Adding to the same campaign does not increase count.
 	s.Add("camp1", 200, 20, 100.0, 10)
-	if s.Len() != 1 {
-		t.Fatalf("expected 1, got %d", s.Len())
+	if n := len(s.TopKByCTR(100)); n != 1 {
+		t.Fatalf("expected 1, got %d", n)
 	}
 
 	s.Add("camp2", 300, 30, 150.0, 15)
-	if s.Len() != 2 {
-		t.Fatalf("expected 2, got %d", s.Len())
+	if n := len(s.TopKByCTR(100)); n != 2 {
+		t.Fatalf("expected 2, got %d", n)
 	}
 }
 
@@ -183,7 +183,7 @@ func TestInMemoryStore_SatisfiesInterface(t *testing.T) {
 	if err := p.Process(strings.NewReader(input), s); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if s.Len() != 1 {
-		t.Errorf("expected 1 campaign, got %d", s.Len())
+	if n := len(s.TopKByCTR(100)); n != 1 {
+		t.Errorf("expected 1 campaign, got %d", n)
 	}
 }
