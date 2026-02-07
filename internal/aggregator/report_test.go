@@ -15,7 +15,7 @@ func TestFileReportWriter_WriteReports(t *testing.T) {
 	}
 
 	dir := t.TempDir()
-	w := NewFileReportWriter(dir)
+	w := NewFileReportWriter(dir, 10)
 
 	if err := w.WriteReports(metrics); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -42,8 +42,9 @@ func TestWriteTopCTR_Ranking(t *testing.T) {
 		{CampaignID: "mid", TotalImpressions: 1000, TotalClicks: 50},
 	}
 
+	w := &fileReportWriter{topK: 10}
 	var buf bytes.Buffer
-	if err := writeTopCTR(&buf, all); err != nil {
+	if err := w.writeTopCTR(&buf, all); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -68,8 +69,9 @@ func TestWriteTopCPA_ExcludesZeroConversions(t *testing.T) {
 		{CampaignID: "no_conv", TotalSpend: 200.00, TotalConversions: 0},
 	}
 
+	w := &fileReportWriter{topK: 10}
 	var buf bytes.Buffer
-	if err := writeTopCPA(&buf, all); err != nil {
+	if err := w.writeTopCPA(&buf, all); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -89,8 +91,9 @@ func TestWriteTopCPA_Ranking(t *testing.T) {
 		{CampaignID: "mid", TotalSpend: 500.00, TotalConversions: 10},       // CPA = 50
 	}
 
+	w := &fileReportWriter{topK: 10}
 	var buf bytes.Buffer
-	if err := writeTopCPA(&buf, all); err != nil {
+	if err := w.writeTopCPA(&buf, all); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -106,5 +109,65 @@ func TestWriteTopCPA_Ranking(t *testing.T) {
 	// Last data row should be "expensive" (highest CPA).
 	if !strings.HasPrefix(lines[3], "expensive,") {
 		t.Errorf("expected last data row to be 'expensive', got %s", lines[3])
+	}
+}
+
+func TestConfigurableTopK(t *testing.T) {
+	// Create 5 campaigns with different CTR values.
+	all := []*CampaignMetrics{
+		{CampaignID: "camp1", TotalImpressions: 1000, TotalClicks: 10},  // CTR: 0.01
+		{CampaignID: "camp2", TotalImpressions: 1000, TotalClicks: 20},  // CTR: 0.02
+		{CampaignID: "camp3", TotalImpressions: 1000, TotalClicks: 30},  // CTR: 0.03
+		{CampaignID: "camp4", TotalImpressions: 1000, TotalClicks: 40},  // CTR: 0.04
+		{CampaignID: "camp5", TotalImpressions: 1000, TotalClicks: 50},  // CTR: 0.05
+	}
+
+	// Test with topK = 2, should only return top 2 campaigns.
+	w := &fileReportWriter{topK: 2}
+	var buf bytes.Buffer
+	if err := w.writeTopCTR(&buf, all); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
+	if len(lines) != 3 { // header + 2 data rows
+		t.Fatalf("expected 3 lines (header + 2 data rows), got %d", len(lines))
+	}
+
+	// Verify that only top 2 campaigns are included.
+	if !strings.HasPrefix(lines[1], "camp5,") {
+		t.Errorf("expected first data row to be 'camp5', got %s", lines[1])
+	}
+	if !strings.HasPrefix(lines[2], "camp4,") {
+		t.Errorf("expected second data row to be 'camp4', got %s", lines[2])
+	}
+}
+
+func TestConfigurableTopK_FileNames(t *testing.T) {
+	metrics := map[string]*CampaignMetrics{
+		"camp1": {CampaignID: "camp1", TotalImpressions: 1000, TotalClicks: 100, TotalSpend: 500.00, TotalConversions: 10},
+	}
+
+	dir := t.TempDir()
+	w := NewFileReportWriter(dir, 5)
+
+	if err := w.WriteReports(metrics); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify files were created with the correct topK value in the name.
+	for _, name := range []string{"top5_ctr.csv", "top5_cpa.csv"} {
+		path := filepath.Join(dir, name)
+		if _, err := os.Stat(path); err != nil {
+			t.Errorf("expected %s to exist: %v", name, err)
+		}
+	}
+
+	// Verify old file names don't exist.
+	for _, name := range []string{"top10_ctr.csv", "top10_cpa.csv"} {
+		path := filepath.Join(dir, name)
+		if _, err := os.Stat(path); err == nil {
+			t.Errorf("expected %s to NOT exist", name)
+		}
 	}
 }
