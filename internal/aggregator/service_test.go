@@ -10,50 +10,52 @@ import (
 // --- fakes for testing ---
 
 type fakeProcessor struct {
-	result map[string]*CampaignMetrics
-	err    error
+	fn  func(MetricsStore)
+	err error
 }
 
-func (f *fakeProcessor) Process(r io.Reader) (map[string]*CampaignMetrics, error) {
-	return f.result, f.err
+func (f *fakeProcessor) Process(r io.Reader, store MetricsStore) error {
+	if f.err != nil {
+		return f.err
+	}
+	if f.fn != nil {
+		f.fn(store)
+	}
+	return nil
 }
 
 type fakeWriter struct {
-	called   bool
-	received map[string]*CampaignMetrics
-	err      error
+	called bool
+	store  MetricsStore
+	err    error
 }
 
-func (f *fakeWriter) WriteReports(metrics map[string]*CampaignMetrics) error {
+func (f *fakeWriter) WriteReports(store MetricsStore) error {
 	f.called = true
-	f.received = metrics
+	f.store = store
 	return f.err
 }
 
 // --- tests ---
 
 func TestService_Run(t *testing.T) {
-	metrics := map[string]*CampaignMetrics{
-		"camp1": {CampaignID: "camp1", TotalImpressions: 1000},
+	proc := &fakeProcessor{
+		fn: func(store MetricsStore) {
+			store.Add("camp1", 1000, 0, 0, 0)
+		},
 	}
-
-	proc := &fakeProcessor{result: metrics}
 	writer := &fakeWriter{}
 	svc := NewService(proc, writer)
 
-	got, err := svc.Run(strings.NewReader(""))
-	if err != nil {
+	if err := svc.Run(strings.NewReader("")); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	if !writer.called {
 		t.Error("expected writer to be called")
 	}
-	if got["camp1"] == nil {
-		t.Error("expected metrics to be returned")
-	}
-	if writer.received["camp1"] == nil {
-		t.Error("expected writer to receive metrics")
+	if writer.store == nil {
+		t.Fatal("expected writer to receive store")
 	}
 }
 
@@ -62,7 +64,7 @@ func TestService_ProcessError(t *testing.T) {
 	writer := &fakeWriter{}
 	svc := NewService(proc, writer)
 
-	_, err := svc.Run(strings.NewReader(""))
+	err := svc.Run(strings.NewReader(""))
 	if err == nil {
 		t.Fatal("expected error from processor")
 	}
@@ -72,15 +74,15 @@ func TestService_ProcessError(t *testing.T) {
 }
 
 func TestService_WriterError(t *testing.T) {
-	metrics := map[string]*CampaignMetrics{
-		"camp1": {CampaignID: "camp1"},
+	proc := &fakeProcessor{
+		fn: func(store MetricsStore) {
+			store.Add("camp1", 0, 0, 0, 0)
+		},
 	}
-
-	proc := &fakeProcessor{result: metrics}
 	writer := &fakeWriter{err: errors.New("disk full")}
 	svc := NewService(proc, writer)
 
-	_, err := svc.Run(strings.NewReader(""))
+	err := svc.Run(strings.NewReader(""))
 	if err == nil {
 		t.Fatal("expected error from writer")
 	}

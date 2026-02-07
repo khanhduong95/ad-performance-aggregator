@@ -14,13 +14,11 @@ func NewService(p Processor, w ReportWriter) *Service {
 }
 
 // Run processes CSV data from r and writes the generated reports.
-func (s *Service) Run(r io.Reader) (map[string]*CampaignMetrics, error) {
-	metrics, err := s.processor.Process(r)
-	if err != nil {
-		return nil, err
+func (s *Service) Run(r io.Reader) error {
+	store := NewInMemoryMetricsStore()
+
+	if err := s.processor.Process(r, store); err != nil {
+		return err
 	}
-	if err := s.writer.WriteReports(metrics); err != nil {
-		return nil, err
-	}
-	return metrics, nil
+	return s.writer.WriteReports(store)
 }

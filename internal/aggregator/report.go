@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
 	"strconv"
 )
 
@@ -26,84 +25,36 @@ func NewFileReportWriter(outputDir string, topK int) ReportWriter {
 }
 
 // WriteReports produces top{K}_ctr.csv and top{K}_cpa.csv inside the output directory.
-func (w *fileReportWriter) WriteReports(metrics map[string]*CampaignMetrics) error {
+func (w *fileReportWriter) WriteReports(store MetricsStore) error {
 	if err := os.MkdirAll(w.outputDir, 0o755); err != nil {
 		return fmt.Errorf("create output dir: %w", err)
 	}
 
-	all := metricsSlice(metrics)
-
 	ctrPath := filepath.Join(w.outputDir, fmt.Sprintf("top%d_ctr.csv", w.topK))
-	if err := w.writeToFile(ctrPath, all, w.writeTopCTR); err != nil {
+	if err := writeMetricsFile(ctrPath, ctrHeader, store.TopKByCTR(w.topK), ctrRow); err != nil {
 		return err
 	}
 
 	cpaPath := filepath.Join(w.outputDir, fmt.Sprintf("top%d_cpa.csv", w.topK))
-	if err := w.writeToFile(cpaPath, all, w.writeTopCPA); err != nil {
+	if err := writeMetricsFile(cpaPath, cpaHeader, store.TopKByCPA(w.topK), cpaRow); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// writeToFile creates a file at path and delegates writing to fn.
-func (w *fileReportWriter) writeToFile(path string, all []*CampaignMetrics, fn func(io.Writer, []*CampaignMetrics) error) error {
+// writeMetricsFile creates a file at path and writes header + rows as CSV.
+func writeMetricsFile(path string, header []string, rows []*CampaignMetrics, toRow func(*CampaignMetrics) []string) error {
 	f, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("create %s: %w", path, err)
 	}
 	defer f.Close()
 
-	if err := fn(f, all); err != nil {
+	if err := writeCSV(f, header, rows, toRow); err != nil {
 		return fmt.Errorf("write %s: %w", path, err)
 	}
 	return nil
-}
-
-// metricsSlice converts the map to a slice for sorting.
-func metricsSlice(m map[string]*CampaignMetrics) []*CampaignMetrics {
-	s := make([]*CampaignMetrics, 0, len(m))
-	for _, v := range m {
-		s = append(s, v)
-	}
-	return s
-}
-
-// writeTopCTR writes the top-K campaigns by CTR (descending) to out.
-func (w *fileReportWriter) writeTopCTR(out io.Writer, all []*CampaignMetrics) error {
-	sort.Slice(all, func(i, j int) bool {
-		return all[i].CTR() > all[j].CTR()
-	})
-
-	n := w.topK
-	if len(all) < n {
-		n = len(all)
-	}
-
-	return writeCSV(out, ctrHeader, all[:n], ctrRow)
-}
-
-// writeTopCPA writes the top-K campaigns by CPA (ascending) to out,
-// excluding campaigns with zero conversions.
-func (w *fileReportWriter) writeTopCPA(out io.Writer, all []*CampaignMetrics) error {
-	// Filter to campaigns that actually have conversions.
-	eligible := make([]*CampaignMetrics, 0, len(all))
-	for _, m := range all {
-		if m.TotalConversions > 0 {
-			eligible = append(eligible, m)
-		}
-	}
-
-	sort.Slice(eligible, func(i, j int) bool {
-		return eligible[i].CPA() < eligible[j].CPA()
-	})
-
-	n := w.topK
-	if len(eligible) < n {
-		n = len(eligible)
-	}
-
-	return writeCSV(out, cpaHeader, eligible[:n], cpaRow)
 }
 
 var ctrHeader = []string{"campaign_id", "impressions", "clicks", "ctr"}
