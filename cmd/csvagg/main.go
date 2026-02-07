@@ -12,21 +12,22 @@ import (
 func main() {
 	input := flag.String("input", "", "path to input CSV file (required)")
 	output := flag.String("output", "", "path to output directory (required)")
+	topK := flag.Int("topk", 10, "number of top campaigns to include in reports (default: 10)")
 	flag.Parse()
 
 	if *input == "" || *output == "" {
-		fmt.Fprintln(os.Stderr, "usage: csvagg --input <csv_path> --output <output_dir>")
+		fmt.Fprintln(os.Stderr, "usage: csvagg --input <csv_path> --output <output_dir> [--topk <number>]")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
-	if err := run(*input, *output); err != nil {
+	if err := run(*input, *output, *topK); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
 }
 
-func run(input, output string) error {
+func run(input, output string, topK int) error {
 	f, err := os.Open(input)
 	if err != nil {
 		return fmt.Errorf("open input: %w", err)
@@ -38,7 +39,7 @@ func run(input, output string) error {
 
 	svc := aggregator.NewService(
 		aggregator.NewCSVProcessor(),
-		aggregator.NewFileReportWriter(output),
+		aggregator.NewFileReportWriter(output, topK),
 	)
 
 	metrics, err := svc.Run(f)
