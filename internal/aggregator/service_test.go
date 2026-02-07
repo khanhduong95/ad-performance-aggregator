@@ -47,16 +47,12 @@ func TestService_Run(t *testing.T) {
 	writer := &fakeWriter{}
 	svc := NewService(proc, writer)
 
-	count, err := svc.Run(strings.NewReader(""))
-	if err != nil {
+	if err := svc.Run(strings.NewReader("")); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	if !writer.called {
 		t.Error("expected writer to be called")
-	}
-	if count != 1 {
-		t.Errorf("expected count 1, got %d", count)
 	}
 	if writer.store == nil {
 		t.Fatal("expected writer to receive store")
@@ -68,7 +64,7 @@ func TestService_ProcessError(t *testing.T) {
 	writer := &fakeWriter{}
 	svc := NewService(proc, writer)
 
-	_, err := svc.Run(strings.NewReader(""))
+	err := svc.Run(strings.NewReader(""))
 	if err == nil {
 		t.Fatal("expected error from processor")
 	}
@@ -86,7 +82,7 @@ func TestService_WriterError(t *testing.T) {
 	writer := &fakeWriter{err: errors.New("disk full")}
 	svc := NewService(proc, writer)
 
-	_, err := svc.Run(strings.NewReader(""))
+	err := svc.Run(strings.NewReader(""))
 	if err == nil {
 		t.Fatal("expected error from writer")
 	}

@@ -14,15 +14,11 @@ func NewService(p Processor, w ReportWriter) *Service {
 }
 
 // Run processes CSV data from r and writes the generated reports.
-// It returns the number of distinct campaigns aggregated.
-func (s *Service) Run(r io.Reader) (int, error) {
+func (s *Service) Run(r io.Reader) error {
 	store := NewInMemoryStore()
 
 	if err := s.processor.Process(r, store); err != nil {
-		return 0, err
+		return err
 	}
-	if err := s.writer.WriteReports(store); err != nil {
-		return 0, err
-	}
-	return store.Len(), nil
+	return s.writer.WriteReports(store)
 }
