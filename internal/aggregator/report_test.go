@@ -8,7 +8,7 @@ import (
 )
 
 func TestFileReportWriter_WriteReports(t *testing.T) {
-	store := NewInMemoryStore()
+	store := NewInMemoryMetricsStore()
 	store.Add("camp1", 1000, 100, 500.00, 10)
 	store.Add("camp2", 2000, 50, 200.00, 20)
 
@@ -34,7 +34,7 @@ func TestFileReportWriter_WriteReports(t *testing.T) {
 }
 
 func TestWriteTopCTR_Ranking(t *testing.T) {
-	store := NewInMemoryStore()
+	store := NewInMemoryMetricsStore()
 	store.Add("low", 1000, 10, 0, 0)
 	store.Add("high", 1000, 100, 0, 0)
 	store.Add("mid", 1000, 50, 0, 0)
@@ -67,7 +67,7 @@ func TestWriteTopCTR_Ranking(t *testing.T) {
 }
 
 func TestWriteTopCPA_ExcludesZeroConversions(t *testing.T) {
-	store := NewInMemoryStore()
+	store := NewInMemoryMetricsStore()
 	store.Add("has_conv", 0, 0, 100.00, 10)
 	store.Add("no_conv", 0, 0, 200.00, 0)
 
@@ -93,7 +93,7 @@ func TestWriteTopCPA_ExcludesZeroConversions(t *testing.T) {
 }
 
 func TestWriteTopCPA_Ranking(t *testing.T) {
-	store := NewInMemoryStore()
+	store := NewInMemoryMetricsStore()
 	store.Add("expensive", 0, 0, 1000.00, 10) // CPA = 100
 	store.Add("cheap", 0, 0, 100.00, 10)      // CPA = 10
 	store.Add("mid", 0, 0, 500.00, 10)        // CPA = 50
@@ -126,7 +126,7 @@ func TestWriteTopCPA_Ranking(t *testing.T) {
 }
 
 func TestConfigurableTopK(t *testing.T) {
-	store := NewInMemoryStore()
+	store := NewInMemoryMetricsStore()
 	store.Add("camp1", 1000, 10, 0, 0)  // CTR: 0.01
 	store.Add("camp2", 1000, 20, 0, 0)  // CTR: 0.02
 	store.Add("camp3", 1000, 30, 0, 0)  // CTR: 0.03
@@ -161,7 +161,7 @@ func TestConfigurableTopK(t *testing.T) {
 }
 
 func TestConfigurableTopK_FileNames(t *testing.T) {
-	store := NewInMemoryStore()
+	store := NewInMemoryMetricsStore()
 	store.Add("camp1", 1000, 100, 500.00, 10)
 
 	dir := t.TempDir()

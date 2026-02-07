@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func TestInMemoryStore_AddAndCount(t *testing.T) {
-	s := NewInMemoryStore()
+func TestInMemoryMetricsStore_AddAndCount(t *testing.T) {
+	s := NewInMemoryMetricsStore()
 	if n := len(s.TopKByCTR(100)); n != 0 {
 		t.Fatalf("expected 0, got %d", n)
 	}
@@ -28,8 +28,8 @@ func TestInMemoryStore_AddAndCount(t *testing.T) {
 	}
 }
 
-func TestInMemoryStore_Accumulation(t *testing.T) {
-	s := NewInMemoryStore()
+func TestInMemoryMetricsStore_Accumulation(t *testing.T) {
+	s := NewInMemoryMetricsStore()
 	s.Add("camp1", 1000, 50, 100.00, 10)
 	s.Add("camp1", 500, 25, 50.00, 5)
 
@@ -56,8 +56,8 @@ func TestInMemoryStore_Accumulation(t *testing.T) {
 	}
 }
 
-func TestInMemoryStore_TopKByCTR_Ranking(t *testing.T) {
-	s := NewInMemoryStore()
+func TestInMemoryMetricsStore_TopKByCTR_Ranking(t *testing.T) {
+	s := NewInMemoryMetricsStore()
 	s.Add("low", 1000, 10, 0, 0)   // CTR 0.01
 	s.Add("high", 1000, 100, 0, 0)  // CTR 0.10
 	s.Add("mid", 1000, 50, 0, 0)    // CTR 0.05
@@ -74,8 +74,8 @@ func TestInMemoryStore_TopKByCTR_Ranking(t *testing.T) {
 	}
 }
 
-func TestInMemoryStore_TopKByCTR_Limit(t *testing.T) {
-	s := NewInMemoryStore()
+func TestInMemoryMetricsStore_TopKByCTR_Limit(t *testing.T) {
+	s := NewInMemoryMetricsStore()
 	for i := 0; i < 5; i++ {
 		s.Add(string(rune('A'+i)), 1000, int64((i+1)*10), 0, 0)
 	}
@@ -86,8 +86,8 @@ func TestInMemoryStore_TopKByCTR_Limit(t *testing.T) {
 	}
 }
 
-func TestInMemoryStore_TopKByCPA_Ranking(t *testing.T) {
-	s := NewInMemoryStore()
+func TestInMemoryMetricsStore_TopKByCPA_Ranking(t *testing.T) {
+	s := NewInMemoryMetricsStore()
 	s.Add("expensive", 0, 0, 1000.00, 10) // CPA = 100
 	s.Add("cheap", 0, 0, 100.00, 10)      // CPA = 10
 	s.Add("mid", 0, 0, 500.00, 10)        // CPA = 50
@@ -104,8 +104,8 @@ func TestInMemoryStore_TopKByCPA_Ranking(t *testing.T) {
 	}
 }
 
-func TestInMemoryStore_TopKByCPA_ExcludesZeroConversions(t *testing.T) {
-	s := NewInMemoryStore()
+func TestInMemoryMetricsStore_TopKByCPA_ExcludesZeroConversions(t *testing.T) {
+	s := NewInMemoryMetricsStore()
 	s.Add("has_conv", 0, 0, 100.00, 10)
 	s.Add("no_conv", 0, 0, 200.00, 0)
 
@@ -118,8 +118,8 @@ func TestInMemoryStore_TopKByCPA_ExcludesZeroConversions(t *testing.T) {
 	}
 }
 
-func TestInMemoryStore_TopKByCPA_Limit(t *testing.T) {
-	s := NewInMemoryStore()
+func TestInMemoryMetricsStore_TopKByCPA_Limit(t *testing.T) {
+	s := NewInMemoryMetricsStore()
 	for i := 0; i < 5; i++ {
 		s.Add(string(rune('A'+i)), 0, 0, float64((i+1)*100), 10)
 	}
@@ -130,8 +130,8 @@ func TestInMemoryStore_TopKByCPA_Limit(t *testing.T) {
 	}
 }
 
-func TestInMemoryStore_TopK_Empty(t *testing.T) {
-	s := NewInMemoryStore()
+func TestInMemoryMetricsStore_TopK_Empty(t *testing.T) {
+	s := NewInMemoryMetricsStore()
 
 	ctr := s.TopKByCTR(10)
 	if len(ctr) != 0 {
@@ -144,8 +144,8 @@ func TestInMemoryStore_TopK_Empty(t *testing.T) {
 	}
 }
 
-func TestInMemoryStore_DerivedMetrics(t *testing.T) {
-	s := NewInMemoryStore()
+func TestInMemoryMetricsStore_DerivedMetrics(t *testing.T) {
+	s := NewInMemoryMetricsStore()
 	s.Add("camp1", 1000, 100, 500.00, 50)
 
 	all := s.TopKByCTR(1)
@@ -172,12 +172,12 @@ func findByCampaignID(metrics []*CampaignMetrics, id string) *CampaignMetrics {
 	return nil
 }
 
-func TestInMemoryStore_SatisfiesInterface(t *testing.T) {
-	// Compile-time check that InMemoryStore implements MetricsStore.
-	var _ MetricsStore = NewInMemoryStore()
+func TestInMemoryMetricsStore_SatisfiesInterface(t *testing.T) {
+	// Compile-time check that InMemoryMetricsStore implements MetricsStore.
+	var _ MetricsStore = NewInMemoryMetricsStore()
 
 	// Also verify via strings.NewReader round-trip with processor.
-	s := NewInMemoryStore()
+	s := NewInMemoryMetricsStore()
 	p := NewCSVProcessor()
 	input := "campaign_id,impressions,clicks,spend,conversions\ncamp1,100,10,50.00,5\n"
 	if err := p.Process(strings.NewReader(input), s); err != nil {

@@ -15,7 +15,7 @@ func NewService(p Processor, w ReportWriter) *Service {
 
 // Run processes CSV data from r and writes the generated reports.
 func (s *Service) Run(r io.Reader) error {
-	store := NewInMemoryStore()
+	store := NewInMemoryMetricsStore()
 
 	if err := s.processor.Process(r, store); err != nil {
 		return err

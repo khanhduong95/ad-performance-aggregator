@@ -2,18 +2,18 @@ package aggregator
 
 import "sort"
 
-// InMemoryStore is an in-memory implementation of MetricsStore backed
+// InMemoryMetricsStore is an in-memory implementation of MetricsStore backed
 // by a plain map. It is the only concrete backend.
-type InMemoryStore struct {
+type InMemoryMetricsStore struct {
 	m map[string]*CampaignMetrics
 }
 
-// NewInMemoryStore creates a new empty InMemoryStore.
-func NewInMemoryStore() *InMemoryStore {
-	return &InMemoryStore{m: make(map[string]*CampaignMetrics)}
+// NewInMemoryMetricsStore creates a new empty InMemoryMetricsStore.
+func NewInMemoryMetricsStore() *InMemoryMetricsStore {
+	return &InMemoryMetricsStore{m: make(map[string]*CampaignMetrics)}
 }
 
-func (s *InMemoryStore) Add(campaignID string, impressions, clicks int64, spend float64, conversions int64) {
+func (s *InMemoryMetricsStore) Add(campaignID string, impressions, clicks int64, spend float64, conversions int64) {
 	cm, ok := s.m[campaignID]
 	if !ok {
 		cm = &CampaignMetrics{CampaignID: campaignID}
@@ -25,7 +25,7 @@ func (s *InMemoryStore) Add(campaignID string, impressions, clicks int64, spend 
 	cm.TotalConversions += conversions
 }
 
-func (s *InMemoryStore) TopKByCTR(k int) []*CampaignMetrics {
+func (s *InMemoryMetricsStore) TopKByCTR(k int) []*CampaignMetrics {
 	all := s.all()
 	sort.Slice(all, func(i, j int) bool {
 		return all[i].CTR() > all[j].CTR()
@@ -36,7 +36,7 @@ func (s *InMemoryStore) TopKByCTR(k int) []*CampaignMetrics {
 	return all[:k]
 }
 
-func (s *InMemoryStore) TopKByCPA(k int) []*CampaignMetrics {
+func (s *InMemoryMetricsStore) TopKByCPA(k int) []*CampaignMetrics {
 	eligible := make([]*CampaignMetrics, 0, len(s.m))
 	for _, cm := range s.m {
 		if cm.TotalConversions > 0 {
@@ -52,7 +52,7 @@ func (s *InMemoryStore) TopKByCPA(k int) []*CampaignMetrics {
 	return eligible[:k]
 }
 
-func (s *InMemoryStore) all() []*CampaignMetrics {
+func (s *InMemoryMetricsStore) all() []*CampaignMetrics {
 	result := make([]*CampaignMetrics, 0, len(s.m))
 	for _, v := range s.m {
 		result = append(result, v)
