@@ -42,12 +42,12 @@ func run(input, output string, topK int) error {
 		aggregator.NewFileReportWriter(output, topK),
 	)
 
-	metrics, err := svc.Run(f)
+	n, err := svc.Run(f)
 	if err != nil {
 		return err
 	}
 
-	fmt.Fprintf(os.Stderr, "aggregated %d campaigns in %s\n", len(metrics), time.Since(start))
+	fmt.Fprintf(os.Stderr, "aggregated %d campaigns in %s\n", n, time.Since(start))
 	fmt.Fprintf(os.Stderr, "reports written to %s/\n", output)
 	return nil
 }

@@ -1,7 +1,6 @@
 package aggregator
 
 import (
-	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,15 +8,14 @@ import (
 )
 
 func TestFileReportWriter_WriteReports(t *testing.T) {
-	metrics := map[string]*CampaignMetrics{
-		"camp1": {CampaignID: "camp1", TotalImpressions: 1000, TotalClicks: 100, TotalSpend: 500.00, TotalConversions: 10},
-		"camp2": {CampaignID: "camp2", TotalImpressions: 2000, TotalClicks: 50, TotalSpend: 200.00, TotalConversions: 20},
-	}
+	store := NewInMemoryStore()
+	store.Add("camp1", 1000, 100, 500.00, 10)
+	store.Add("camp2", 2000, 50, 200.00, 20)
 
 	dir := t.TempDir()
 	w := NewFileReportWriter(dir, 10)
 
-	if err := w.WriteReports(metrics); err != nil {
+	if err := w.WriteReports(store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -36,19 +34,24 @@ func TestFileReportWriter_WriteReports(t *testing.T) {
 }
 
 func TestWriteTopCTR_Ranking(t *testing.T) {
-	all := []*CampaignMetrics{
-		{CampaignID: "low", TotalImpressions: 1000, TotalClicks: 10},
-		{CampaignID: "high", TotalImpressions: 1000, TotalClicks: 100},
-		{CampaignID: "mid", TotalImpressions: 1000, TotalClicks: 50},
-	}
+	store := NewInMemoryStore()
+	store.Add("low", 1000, 10, 0, 0)
+	store.Add("high", 1000, 100, 0, 0)
+	store.Add("mid", 1000, 50, 0, 0)
 
-	w := &fileReportWriter{topK: 10}
-	var buf bytes.Buffer
-	if err := w.writeTopCTR(&buf, all); err != nil {
+	dir := t.TempDir()
+	w := NewFileReportWriter(dir, 10)
+
+	if err := w.WriteReports(store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
+	data, err := os.ReadFile(filepath.Join(dir, "top10_ctr.csv"))
+	if err != nil {
+		t.Fatalf("read ctr file: %v", err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
 	if len(lines) != 4 { // header + 3 data rows
 		t.Fatalf("expected 4 lines, got %d", len(lines))
 	}
@@ -64,18 +67,23 @@ func TestWriteTopCTR_Ranking(t *testing.T) {
 }
 
 func TestWriteTopCPA_ExcludesZeroConversions(t *testing.T) {
-	all := []*CampaignMetrics{
-		{CampaignID: "has_conv", TotalSpend: 100.00, TotalConversions: 10},
-		{CampaignID: "no_conv", TotalSpend: 200.00, TotalConversions: 0},
-	}
+	store := NewInMemoryStore()
+	store.Add("has_conv", 0, 0, 100.00, 10)
+	store.Add("no_conv", 0, 0, 200.00, 0)
 
-	w := &fileReportWriter{topK: 10}
-	var buf bytes.Buffer
-	if err := w.writeTopCPA(&buf, all); err != nil {
+	dir := t.TempDir()
+	w := NewFileReportWriter(dir, 10)
+
+	if err := w.WriteReports(store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	output := buf.String()
+	data, err := os.ReadFile(filepath.Join(dir, "top10_cpa.csv"))
+	if err != nil {
+		t.Fatalf("read cpa file: %v", err)
+	}
+
+	output := string(data)
 	if strings.Contains(output, "no_conv") {
 		t.Error("expected zero-conversion campaign to be excluded")
 	}
@@ -85,19 +93,24 @@ func TestWriteTopCPA_ExcludesZeroConversions(t *testing.T) {
 }
 
 func TestWriteTopCPA_Ranking(t *testing.T) {
-	all := []*CampaignMetrics{
-		{CampaignID: "expensive", TotalSpend: 1000.00, TotalConversions: 10}, // CPA = 100
-		{CampaignID: "cheap", TotalSpend: 100.00, TotalConversions: 10},     // CPA = 10
-		{CampaignID: "mid", TotalSpend: 500.00, TotalConversions: 10},       // CPA = 50
-	}
+	store := NewInMemoryStore()
+	store.Add("expensive", 0, 0, 1000.00, 10) // CPA = 100
+	store.Add("cheap", 0, 0, 100.00, 10)      // CPA = 10
+	store.Add("mid", 0, 0, 500.00, 10)        // CPA = 50
 
-	w := &fileReportWriter{topK: 10}
-	var buf bytes.Buffer
-	if err := w.writeTopCPA(&buf, all); err != nil {
+	dir := t.TempDir()
+	w := NewFileReportWriter(dir, 10)
+
+	if err := w.WriteReports(store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
+	data, err := os.ReadFile(filepath.Join(dir, "top10_cpa.csv"))
+	if err != nil {
+		t.Fatalf("read cpa file: %v", err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
 	if len(lines) != 4 { // header + 3 data rows
 		t.Fatalf("expected 4 lines, got %d", len(lines))
 	}
@@ -113,23 +126,27 @@ func TestWriteTopCPA_Ranking(t *testing.T) {
 }
 
 func TestConfigurableTopK(t *testing.T) {
-	// Create 5 campaigns with different CTR values.
-	all := []*CampaignMetrics{
-		{CampaignID: "camp1", TotalImpressions: 1000, TotalClicks: 10},  // CTR: 0.01
-		{CampaignID: "camp2", TotalImpressions: 1000, TotalClicks: 20},  // CTR: 0.02
-		{CampaignID: "camp3", TotalImpressions: 1000, TotalClicks: 30},  // CTR: 0.03
-		{CampaignID: "camp4", TotalImpressions: 1000, TotalClicks: 40},  // CTR: 0.04
-		{CampaignID: "camp5", TotalImpressions: 1000, TotalClicks: 50},  // CTR: 0.05
-	}
+	store := NewInMemoryStore()
+	store.Add("camp1", 1000, 10, 0, 0)  // CTR: 0.01
+	store.Add("camp2", 1000, 20, 0, 0)  // CTR: 0.02
+	store.Add("camp3", 1000, 30, 0, 0)  // CTR: 0.03
+	store.Add("camp4", 1000, 40, 0, 0)  // CTR: 0.04
+	store.Add("camp5", 1000, 50, 0, 0)  // CTR: 0.05
 
+	dir := t.TempDir()
 	// Test with topK = 2, should only return top 2 campaigns.
-	w := &fileReportWriter{topK: 2}
-	var buf bytes.Buffer
-	if err := w.writeTopCTR(&buf, all); err != nil {
+	w := NewFileReportWriter(dir, 2)
+
+	if err := w.WriteReports(store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
+	data, err := os.ReadFile(filepath.Join(dir, "top2_ctr.csv"))
+	if err != nil {
+		t.Fatalf("read ctr file: %v", err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
 	if len(lines) != 3 { // header + 2 data rows
 		t.Fatalf("expected 3 lines (header + 2 data rows), got %d", len(lines))
 	}
@@ -144,14 +161,13 @@ func TestConfigurableTopK(t *testing.T) {
 }
 
 func TestConfigurableTopK_FileNames(t *testing.T) {
-	metrics := map[string]*CampaignMetrics{
-		"camp1": {CampaignID: "camp1", TotalImpressions: 1000, TotalClicks: 100, TotalSpend: 500.00, TotalConversions: 10},
-	}
+	store := NewInMemoryStore()
+	store.Add("camp1", 1000, 100, 500.00, 10)
 
 	dir := t.TempDir()
 	w := NewFileReportWriter(dir, 5)
 
-	if err := w.WriteReports(metrics); err != nil {
+	if err := w.WriteReports(store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 

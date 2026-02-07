@@ -11,16 +11,16 @@ camp1,1000,50,100.00,10
 camp1,500,25,50.00,5
 `
 	p := NewCSVProcessor()
-	metrics, err := p.Process(strings.NewReader(input))
-	if err != nil {
+	store := NewInMemoryStore()
+	if err := p.Process(strings.NewReader(input), store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if len(metrics) != 1 {
-		t.Fatalf("expected 1 campaign, got %d", len(metrics))
+	if store.Len() != 1 {
+		t.Fatalf("expected 1 campaign, got %d", store.Len())
 	}
 
-	m := metrics["camp1"]
+	m := findByCampaignID(store.TopKByCTR(100), "camp1")
 	if m == nil {
 		t.Fatal("camp1 not found")
 	}
@@ -45,17 +45,18 @@ camp2,2000,100,200.00,20
 camp3,3000,150,300.00,30
 `
 	p := NewCSVProcessor()
-	metrics, err := p.Process(strings.NewReader(input))
-	if err != nil {
+	store := NewInMemoryStore()
+	if err := p.Process(strings.NewReader(input), store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if len(metrics) != 3 {
-		t.Fatalf("expected 3 campaigns, got %d", len(metrics))
+	if store.Len() != 3 {
+		t.Fatalf("expected 3 campaigns, got %d", store.Len())
 	}
 
+	all := store.TopKByCTR(100)
 	for _, id := range []string{"camp1", "camp2", "camp3"} {
-		if metrics[id] == nil {
+		if findByCampaignID(all, id) == nil {
 			t.Errorf("campaign %s not found", id)
 		}
 	}
@@ -66,7 +67,8 @@ func TestCSVProcessor_MissingHeader(t *testing.T) {
 camp1,1000,50
 `
 	p := NewCSVProcessor()
-	_, err := p.Process(strings.NewReader(input))
+	store := NewInMemoryStore()
+	err := p.Process(strings.NewReader(input), store)
 	if err == nil {
 		t.Fatal("expected error for missing columns")
 	}
@@ -77,7 +79,8 @@ func TestCSVProcessor_BadImpressions(t *testing.T) {
 camp1,not_a_number,50,100.00,10
 `
 	p := NewCSVProcessor()
-	_, err := p.Process(strings.NewReader(input))
+	store := NewInMemoryStore()
+	err := p.Process(strings.NewReader(input), store)
 	if err == nil {
 		t.Fatal("expected error for bad impressions value")
 	}
@@ -88,7 +91,8 @@ func TestCSVProcessor_EmptyCampaignID(t *testing.T) {
 ,1000,50,100.00,10
 `
 	p := NewCSVProcessor()
-	_, err := p.Process(strings.NewReader(input))
+	store := NewInMemoryStore()
+	err := p.Process(strings.NewReader(input), store)
 	if err == nil {
 		t.Fatal("expected error for empty campaign_id")
 	}
@@ -97,12 +101,12 @@ func TestCSVProcessor_EmptyCampaignID(t *testing.T) {
 func TestCSVProcessor_HeaderOnly(t *testing.T) {
 	input := "campaign_id,impressions,clicks,spend,conversions\n"
 	p := NewCSVProcessor()
-	metrics, err := p.Process(strings.NewReader(input))
-	if err != nil {
+	store := NewInMemoryStore()
+	if err := p.Process(strings.NewReader(input), store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(metrics) != 0 {
-		t.Errorf("expected 0 campaigns, got %d", len(metrics))
+	if store.Len() != 0 {
+		t.Errorf("expected 0 campaigns, got %d", store.Len())
 	}
 }
 
@@ -111,12 +115,12 @@ func TestCSVProcessor_DerivedMetrics(t *testing.T) {
 camp1,1000,100,500.00,50
 `
 	p := NewCSVProcessor()
-	metrics, err := p.Process(strings.NewReader(input))
-	if err != nil {
+	store := NewInMemoryStore()
+	if err := p.Process(strings.NewReader(input), store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	m := metrics["camp1"]
+	m := findByCampaignID(store.TopKByCTR(100), "camp1")
 	wantCTR := 0.1 // 100/1000
 	if m.CTR() != wantCTR {
 		t.Errorf("CTR: got %f, want %f", m.CTR(), wantCTR)

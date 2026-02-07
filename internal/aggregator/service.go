@@ -14,13 +14,15 @@ func NewService(p Processor, w ReportWriter) *Service {
 }
 
 // Run processes CSV data from r and writes the generated reports.
-func (s *Service) Run(r io.Reader) (map[string]*CampaignMetrics, error) {
-	metrics, err := s.processor.Process(r)
-	if err != nil {
-		return nil, err
+// It returns the number of distinct campaigns aggregated.
+func (s *Service) Run(r io.Reader) (int, error) {
+	store := NewInMemoryStore()
+
+	if err := s.processor.Process(r, store); err != nil {
+		return 0, err
 	}
-	if err := s.writer.WriteReports(metrics); err != nil {
-		return nil, err
+	if err := s.writer.WriteReports(store); err != nil {
+		return 0, err
 	}
-	return metrics, nil
+	return store.Len(), nil
 }

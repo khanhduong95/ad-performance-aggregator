@@ -20,25 +20,24 @@ func NewCSVProcessor() Processor {
 	return &csvProcessor{}
 }
 
-// Process streams the CSV from r line-by-line and returns aggregated
-// metrics keyed by campaign_id. Memory usage is proportional to the
+// Process streams the CSV from r line-by-line and accumulates
+// metrics into store. Memory usage is proportional to the
 // number of distinct campaign IDs, not the input size.
-func (p *csvProcessor) Process(r io.Reader) (map[string]*CampaignMetrics, error) {
+func (p *csvProcessor) Process(r io.Reader, store MetricsStore) error {
 	reader := csv.NewReader(r)
 	reader.ReuseRecord = true // reuse the backing array across Read calls
 
 	// --- read and validate header ---
 	header, err := reader.Read()
 	if err != nil {
-		return nil, fmt.Errorf("read header: %w", err)
+		return fmt.Errorf("read header: %w", err)
 	}
 	colIndex, err := mapColumns(header)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// --- stream rows ---
-	metrics := make(map[string]*CampaignMetrics)
 	lineNum := 1 // 1 = header already read
 
 	for {
@@ -47,16 +46,16 @@ func (p *csvProcessor) Process(r io.Reader) (map[string]*CampaignMetrics, error)
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf("line %d: %w", lineNum+1, err)
+			return fmt.Errorf("line %d: %w", lineNum+1, err)
 		}
 		lineNum++
 
-		if err := accumulateRow(metrics, record, colIndex, lineNum); err != nil {
-			return nil, err
+		if err := accumulateRow(store, record, colIndex, lineNum); err != nil {
+			return err
 		}
 	}
 
-	return metrics, nil
+	return nil
 }
 
 // columnIndex holds the positional index for each required column.
@@ -93,8 +92,8 @@ func mapColumns(header []string) (columnIndex, error) {
 	return idx, nil
 }
 
-// accumulateRow parses a single CSV record and merges it into metrics.
-func accumulateRow(metrics map[string]*CampaignMetrics, record []string, col columnIndex, lineNum int) error {
+// accumulateRow parses a single CSV record and merges it into the store.
+func accumulateRow(store MetricsStore, record []string, col columnIndex, lineNum int) error {
 	campaignID := record[col.campaignID]
 	if campaignID == "" {
 		return fmt.Errorf("line %d: empty campaign_id", lineNum)
@@ -120,15 +119,7 @@ func accumulateRow(metrics map[string]*CampaignMetrics, record []string, col col
 		return fmt.Errorf("line %d: bad conversions %q: %w", lineNum, record[col.conversions], err)
 	}
 
-	m, ok := metrics[campaignID]
-	if !ok {
-		m = &CampaignMetrics{CampaignID: campaignID}
-		metrics[campaignID] = m
-	}
-	m.TotalImpressions += impressions
-	m.TotalClicks += clicks
-	m.TotalSpend += spend
-	m.TotalConversions += conversions
+	store.Add(campaignID, impressions, clicks, spend, conversions)
 
 	return nil
 }
