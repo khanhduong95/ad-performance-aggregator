@@ -73,21 +73,7 @@ go test ./...
 
 ## Libraries used
 
-This project uses **only the Go standard library** -- no external dependencies.
-
-| Package          | Purpose                            |
-|------------------|------------------------------------|
-| `encoding/csv`   | Streaming CSV parsing              |
-| `flag`           | Command-line argument parsing      |
-| `fmt`            | Formatted I/O                      |
-| `io`             | I/O interfaces                     |
-| `log/slog`       | Structured logging                 |
-| `os`             | File system operations             |
-| `path/filepath`  | File path manipulation             |
-| `sort`           | Sorting for top-K ranking          |
-| `strconv`        | String-to-number conversion        |
-| `strings`        | String utilities                   |
-| `time`           | Elapsed time measurement           |
+Only the Go standard library -- no external dependencies.
 
 ## Performance
 
