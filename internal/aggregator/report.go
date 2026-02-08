@@ -15,9 +15,6 @@ type fileReportWriter struct {
 	topK      int
 }
 
-// NewFileReportWriter returns a ReportWriter that writes CSV reports
-// to the given directory. The topK parameter controls how many top campaigns
-// to include in each report (defaults to 10 if <= 0).
 func NewFileReportWriter(outputDir string, topK int) ReportWriter {
 	if topK <= 0 {
 		topK = 10
@@ -25,7 +22,6 @@ func NewFileReportWriter(outputDir string, topK int) ReportWriter {
 	return &fileReportWriter{outputDir: outputDir, topK: topK}
 }
 
-// WriteReports produces top{K}_ctr.csv and top{K}_cpa.csv inside the output directory.
 func (w *fileReportWriter) WriteReports(store MetricsStore) error {
 	if err := os.MkdirAll(w.outputDir, 0o755); err != nil {
 		return fmt.Errorf("create output dir: %w", err)
@@ -48,8 +44,12 @@ func (w *fileReportWriter) WriteReports(store MetricsStore) error {
 	return nil
 }
 
-// writeMetricsFile creates a file at path and writes header + rows as CSV.
-func writeMetricsFile(path string, header []string, rows []*CampaignMetrics, toRow func(*CampaignMetrics) []string) error {
+func writeMetricsFile(
+	path string,
+	header []string,
+	rows []*CampaignMetrics,
+	toRow func(*CampaignMetrics) []string,
+) error {
 	f, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("create %s: %w", path, err)
@@ -83,8 +83,12 @@ func cpaRow(m *CampaignMetrics) []string {
 	}
 }
 
-// writeCSV writes a header + data rows to w.
-func writeCSV(w io.Writer, header []string, rows []*CampaignMetrics, toRow func(*CampaignMetrics) []string) error {
+func writeCSV(
+	w io.Writer,
+	header []string,
+	rows []*CampaignMetrics,
+	toRow func(*CampaignMetrics) []string,
+) error {
 	cw := csv.NewWriter(w)
 
 	if err := cw.Write(header); err != nil {

@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/ad-performance-aggregator/internal/aggregator"
+	"github.com/khanhduong95/ad-performance-aggregator/internal/aggregator"
 )
 
 func main() {

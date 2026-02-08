@@ -32,7 +32,6 @@ func (m *CampaignMetrics) CPA() float64 {
 	return m.TotalSpend / float64(m.TotalConversions)
 }
 
-// String implements fmt.Stringer for debugging.
 func (m *CampaignMetrics) String() string {
 	return fmt.Sprintf("campaign=%s imp=%d click=%d spend=%.2f conv=%d ctr=%.6f cpa=%.2f",
 		m.CampaignID, m.TotalImpressions, m.TotalClicks, m.TotalSpend,
