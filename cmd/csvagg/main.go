@@ -22,7 +22,7 @@ func main() {
 	}
 
 	if *input == "" || *output == "" {
-		fmt.Fprintln(os.Stderr, "usage: csvagg --input <csv_path> --output <output_dir> [--topk <number>]")
+		fmt.Fprintln(os.Stderr, "usage: csvagg --input <csv_path> --output <output_dir> [--topk <number>] [--benchmark]")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
