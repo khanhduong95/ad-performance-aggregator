@@ -2,18 +2,20 @@ package aggregator
 
 import "sort"
 
-// InMemoryMetricsStore is an in-memory implementation of MetricsStore backed
-// by a plain map. It is the only concrete backend.
 type InMemoryMetricsStore struct {
 	m map[string]*CampaignMetrics
 }
 
-// NewInMemoryMetricsStore creates a new empty InMemoryMetricsStore.
 func NewInMemoryMetricsStore() *InMemoryMetricsStore {
 	return &InMemoryMetricsStore{m: make(map[string]*CampaignMetrics)}
 }
 
-func (s *InMemoryMetricsStore) Add(campaignID string, impressions, clicks int64, spend float64, conversions int64) {
+func (s *InMemoryMetricsStore) Add(
+	campaignID string,
+	impressions, clicks int64,
+	spend float64,
+	conversions int64,
+) {
 	cm, ok := s.m[campaignID]
 	if !ok {
 		cm = &CampaignMetrics{CampaignID: campaignID}

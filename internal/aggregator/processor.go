@@ -8,15 +8,12 @@ import (
 	"strconv"
 )
 
-// expectedHeader defines the columns we require, in order.
 var expectedHeader = []string{
 	"campaign_id", "impressions", "clicks", "spend", "conversions",
 }
 
 type csvProcessor struct{}
 
-// NewCSVProcessor returns a Processor that parses and aggregates
-// ad performance CSV data.
 func NewCSVProcessor() Processor {
 	return &csvProcessor{}
 }
@@ -26,9 +23,8 @@ func NewCSVProcessor() Processor {
 // number of distinct campaign IDs, not the input size.
 func (p *csvProcessor) Process(r io.Reader, store MetricsStore) error {
 	reader := csv.NewReader(r)
-	reader.ReuseRecord = true // reuse the backing array across Read calls
+	reader.ReuseRecord = true
 
-	// --- read and validate header ---
 	header, err := reader.Read()
 	if err != nil {
 		return fmt.Errorf("read header: %w", err)
@@ -38,8 +34,7 @@ func (p *csvProcessor) Process(r io.Reader, store MetricsStore) error {
 		return err
 	}
 
-	// --- stream rows ---
-	lineNum := 1 // 1 = header already read
+	lineNum := 1 // header already read
 
 	for {
 		record, err := reader.Read()
@@ -60,7 +55,6 @@ func (p *csvProcessor) Process(r io.Reader, store MetricsStore) error {
 	return nil
 }
 
-// columnIndex holds the positional index for each required column.
 type columnIndex struct {
 	campaignID  int
 	impressions int
@@ -69,7 +63,6 @@ type columnIndex struct {
 	conversions int
 }
 
-// mapColumns resolves header names to column positions.
 func mapColumns(header []string) (columnIndex, error) {
 	idx := columnIndex{-1, -1, -1, -1, -1}
 	for i, name := range header {
@@ -86,7 +79,6 @@ func mapColumns(header []string) (columnIndex, error) {
 			idx.conversions = i
 		}
 	}
-	// Verify all required columns were found.
 	if idx.campaignID < 0 || idx.impressions < 0 || idx.clicks < 0 ||
 		idx.spend < 0 || idx.conversions < 0 {
 		return idx, fmt.Errorf("missing required columns; need %v, got %v", expectedHeader, header)
@@ -94,8 +86,12 @@ func mapColumns(header []string) (columnIndex, error) {
 	return idx, nil
 }
 
-// accumulateRow parses a single CSV record and merges it into the store.
-func accumulateRow(store MetricsStore, record []string, col columnIndex, lineNum int) error {
+func accumulateRow(
+	store MetricsStore,
+	record []string,
+	col columnIndex,
+	lineNum int,
+) error {
 	campaignID := record[col.campaignID]
 	if campaignID == "" {
 		return fmt.Errorf("line %d: empty campaign_id", lineNum)
