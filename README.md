@@ -10,7 +10,7 @@ The tool aggregates metrics (impressions, clicks, spend, conversions) by campaig
 
 ```bash
 # Clone the repository
-git clone https://github.com/ad-performance-aggregator.git
+git clone https://github.com/khanhduong95/ad-performance-aggregator.git
 cd ad-performance-aggregator
 
 # Build the binary
