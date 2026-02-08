@@ -78,18 +78,11 @@ Dockerfile with the latest stable.
 ## 9. Cross-Check Output Format Against Requirements
 
 > Cross check with this requirement if there are any issues.
-> (Pasted the full FV-SEC001 requirements spec.)
 
-Found that both output CSV files (`top10_ctr.csv` and `top10_cpa.csv`) were
-missing columns. The spec requires all 7 columns in both files:
-`campaign_id, total_impressions, total_clicks, total_spend, total_conversions, CTR, CPA`.
+Both CSV outputs were missing required columns and had naming/format mismatches.
 
-The CTR report only had 4 columns (`campaign_id, impressions, clicks, ctr`)
-and the CPA report only had 4 (`campaign_id, spend, conversions, cpa`).
-Column names also didn't match (e.g. `impressions` vs `total_impressions`,
-`ctr` vs `CTR`). CTR was formatted to 6 decimal places instead of the 4
-shown in the spec examples.
+The spec requires 7 columns in both reports: campaign_id, total_impressions, total_clicks, total_spend, total_conversions, CTR, CPA.
 
-Fixed by unifying both reports to use a single shared header and row
-formatter with all 7 columns, 4-decimal CTR, and empty CPA for
-zero-conversion campaigns. Updated tests and removed stale result files.
+Initial outputs only contained 4 columns each, with inconsistent column names and CTR precision (6 decimals instead of 4).
+
+Fix: Unified both reports to a shared header and row formatter with all 7 columns, spec-compliant naming, 4-decimal CTR, and empty CPA for zero-conversion campaigns. Updated tests and removed stale result files.
