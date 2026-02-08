@@ -47,7 +47,7 @@ problem was broken down iteratively.
 > and add `store_test.go`. Do not add extra backends, CLI flags, or
 > context parameters. Run `go test ./...` before committing.
 
-Follow-ups: remove unnecessary functions, rename implementations.
+Iterated to trim the interface surface and rename implementations.
 
 ## 5. Create Dockerfile
 
@@ -58,8 +58,7 @@ Follow-ups: remove unnecessary functions, rename implementations.
 > Add minimal benchmark logs at key execution points to demonstrate
 > performance awareness, without impacting behavior or readability.
 
-Follow-ups: enable benchmarks via CLI flag; prevent unnecessary global
-`Benchmark` bool.
+Iterated to make benchmarks opt-in via CLI flag and avoid global state.
 
 ## 7. Create README
 
@@ -67,8 +66,7 @@ Follow-ups: enable benchmarks via CLI flag; prevent unnecessary global
 > libraries used, processing time for the 1GB file, peak memory usage
 > (if measured).
 
-Follow-ups: "how can I get Peak memory (RSS) myself"; remove unnecessary
-table of packages in "Libraries used" section.
+Iterated to learn how to measure peak RSS and trim verbose package listings.
 
 ## 8. Review Code and Refactor
 
@@ -79,5 +77,5 @@ table of packages in "Libraries used" section.
 > - "Service" struct name seems vague
 > - Most comments in code files are not needed
 
-Follow-ups: update `go.mod` to oldest Go version supporting the codebase;
-update Dockerfile to latest stable Go version.
+Iterated to align `go.mod` with the oldest supported Go version and
+Dockerfile with the latest stable.
