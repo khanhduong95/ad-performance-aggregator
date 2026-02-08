@@ -1,6 +1,10 @@
 package aggregator
 
-import "io"
+import (
+	"io"
+	"log"
+	"time"
+)
 
 // Service orchestrates CSV processing and report generation.
 type Service struct {
@@ -17,8 +21,17 @@ func NewService(p Processor, w ReportWriter) *Service {
 func (s *Service) Run(r io.Reader) error {
 	store := NewInMemoryMetricsStore()
 
+	t0 := time.Now()
 	if err := s.processor.Process(r, store); err != nil {
 		return err
 	}
-	return s.writer.WriteReports(store)
+	log.Printf("benchmark: processing phase completed in %s", time.Since(t0))
+
+	t1 := time.Now()
+	if err := s.writer.WriteReports(store); err != nil {
+		return err
+	}
+	log.Printf("benchmark: report writing phase completed in %s", time.Since(t1))
+
+	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"log"
 	"strconv"
 )
 
@@ -55,6 +56,7 @@ func (p *csvProcessor) Process(r io.Reader, store MetricsStore) error {
 		}
 	}
 
+	log.Printf("benchmark: parsed %d data rows", lineNum-1)
 	return nil
 }
 
