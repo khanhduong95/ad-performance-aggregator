@@ -1,11 +1,6 @@
 # Prompts Used During Development
 
-Prompts used to build this project with AI assistance, showing how the
-problem was broken down iteratively.
-
----
-
-## 1. Build Streaming CSV Processor CLI
+## 1. Scaffold Streaming CSV Processor CLI
 
 > Scaffold a production-quality Go CLI application that processes a very large
 > CSV file (~1GB) in a streaming, memory-efficient way.
