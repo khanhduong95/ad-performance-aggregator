@@ -26,7 +26,7 @@ problem was broken down iteratively.
 
 ## 2. Add Interfaces and Dependency Injection
 
-> Add minimal interfaces, DI, and unit tests.
+Added minimal interfaces, dependency injection, and unit tests.
 
 ## 3. Make Top-K Parameter Configurable via CLI
 
@@ -47,7 +47,7 @@ problem was broken down iteratively.
 > and add `store_test.go`. Do not add extra backends, CLI flags, or
 > context parameters. Run `go test ./...` before committing.
 
-Iterated to trim the interface surface and rename implementations.
+Further refined to trim the interface surface and rename implementations.
 
 ## 5. Create Dockerfile
 
@@ -58,7 +58,7 @@ Iterated to trim the interface surface and rename implementations.
 > Add minimal benchmark logs at key execution points to demonstrate
 > performance awareness, without impacting behavior or readability.
 
-Iterated to make benchmarks opt-in via CLI flag and avoid global state.
+Further refined to make benchmarks opt-in via CLI flag and avoid global state.
 
 ## 7. Create README
 
@@ -66,7 +66,7 @@ Iterated to make benchmarks opt-in via CLI flag and avoid global state.
 > libraries used, processing time for the 1GB file, peak memory usage
 > (if measured).
 
-Iterated to learn how to measure peak RSS and trim verbose package listings.
+Further refined to learn how to measure peak RSS and trim verbose package listings.
 
 ## 8. Review Code and Refactor
 
@@ -77,5 +77,5 @@ Iterated to learn how to measure peak RSS and trim verbose package listings.
 > - "Service" struct name seems vague
 > - Most comments in code files are not needed
 
-Iterated to align `go.mod` with the oldest supported Go version and
+Further refined to align `go.mod` with the oldest supported Go version and
 Dockerfile with the latest stable.
