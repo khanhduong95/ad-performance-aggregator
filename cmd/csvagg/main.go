@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -13,10 +14,15 @@ func main() {
 	input := flag.String("input", "", "path to input CSV file (required)")
 	output := flag.String("output", "", "path to output directory (required)")
 	topK := flag.Int("topk", 10, "number of top campaigns to include in reports (default: 10)")
+	benchmark := flag.Bool("benchmark", false, "enable benchmark timing logs on stderr")
 	flag.Parse()
 
+	if *benchmark {
+		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug})))
+	}
+
 	if *input == "" || *output == "" {
-		fmt.Fprintln(os.Stderr, "usage: csvagg --input <csv_path> --output <output_dir> [--topk <number>]")
+		fmt.Fprintln(os.Stderr, "usage: csvagg --input <csv_path> --output <output_dir> [--topk <number>] [--benchmark]")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}

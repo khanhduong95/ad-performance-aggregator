@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -30,15 +31,19 @@ func (w *fileReportWriter) WriteReports(store MetricsStore) error {
 		return fmt.Errorf("create output dir: %w", err)
 	}
 
+	ctrData := store.TopKByCTR(w.topK)
 	ctrPath := filepath.Join(w.outputDir, fmt.Sprintf("top%d_ctr.csv", w.topK))
-	if err := writeMetricsFile(ctrPath, ctrHeader, store.TopKByCTR(w.topK), ctrRow); err != nil {
+	if err := writeMetricsFile(ctrPath, ctrHeader, ctrData, ctrRow); err != nil {
 		return err
 	}
+	slog.Debug("wrote report", "path", ctrPath, "campaigns", len(ctrData))
 
+	cpaData := store.TopKByCPA(w.topK)
 	cpaPath := filepath.Join(w.outputDir, fmt.Sprintf("top%d_cpa.csv", w.topK))
-	if err := writeMetricsFile(cpaPath, cpaHeader, store.TopKByCPA(w.topK), cpaRow); err != nil {
+	if err := writeMetricsFile(cpaPath, cpaHeader, cpaData, cpaRow); err != nil {
 		return err
 	}
+	slog.Debug("wrote report", "path", cpaPath, "campaigns", len(cpaData))
 
 	return nil
 }

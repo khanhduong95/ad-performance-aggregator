@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"log/slog"
 	"strconv"
 )
 
@@ -55,6 +56,7 @@ func (p *csvProcessor) Process(r io.Reader, store MetricsStore) error {
 		}
 	}
 
+	slog.Debug("parsed csv input", "rows", lineNum-1)
 	return nil
 }
 
