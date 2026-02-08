@@ -74,3 +74,15 @@ Further refined to learn how to measure peak RSS and trim verbose package listin
 
 Further refined to align `go.mod` with the oldest supported Go version and
 Dockerfile with the latest stable.
+
+## 9. Cross-Check Output Format Against Requirements
+
+> Cross check with this requirement if there are any issues.
+
+Both CSV outputs were missing required columns and had naming/format mismatches.
+
+The spec requires 7 columns in both reports: campaign_id, total_impressions, total_clicks, total_spend, total_conversions, CTR, CPA.
+
+Initial outputs only contained 4 columns each, with inconsistent column names and CTR precision (6 decimals instead of 4).
+
+Fix: Unified both reports to a shared header and row formatter with all 7 columns, spec-compliant naming, 4-decimal CTR, and empty CPA for zero-conversion campaigns. Updated tests and removed stale result files.

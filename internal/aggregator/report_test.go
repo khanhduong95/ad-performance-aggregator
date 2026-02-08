@@ -35,9 +35,9 @@ func TestFileReportWriter_WriteReports(t *testing.T) {
 
 func TestWriteTopCTR_Ranking(t *testing.T) {
 	store := NewInMemoryMetricsStore()
-	store.Add("low", 1000, 10, 0, 0)
-	store.Add("high", 1000, 100, 0, 0)
-	store.Add("mid", 1000, 50, 0, 0)
+	store.Add("low", 1000, 10, 5.00, 1)
+	store.Add("high", 1000, 100, 50.00, 10)
+	store.Add("mid", 1000, 50, 25.00, 5)
 
 	dir := t.TempDir()
 	w := NewFileReportWriter(dir, 10)
@@ -54,6 +54,11 @@ func TestWriteTopCTR_Ranking(t *testing.T) {
 	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
 	if len(lines) != 4 { // header + 3 data rows
 		t.Fatalf("expected 4 lines, got %d", len(lines))
+	}
+
+	// Verify header has all 7 columns.
+	if lines[0] != "campaign_id,total_impressions,total_clicks,total_spend,total_conversions,CTR,CPA" {
+		t.Errorf("unexpected header: %s", lines[0])
 	}
 
 	// First data row should be "high" (highest CTR).
@@ -94,9 +99,9 @@ func TestWriteTopCPA_ExcludesZeroConversions(t *testing.T) {
 
 func TestWriteTopCPA_Ranking(t *testing.T) {
 	store := NewInMemoryMetricsStore()
-	store.Add("expensive", 0, 0, 1000.00, 10) // CPA = 100
-	store.Add("cheap", 0, 0, 100.00, 10)      // CPA = 10
-	store.Add("mid", 0, 0, 500.00, 10)        // CPA = 50
+	store.Add("expensive", 1000, 50, 1000.00, 10) // CPA = 100
+	store.Add("cheap", 1000, 50, 100.00, 10)      // CPA = 10
+	store.Add("mid", 1000, 50, 500.00, 10)        // CPA = 50
 
 	dir := t.TempDir()
 	w := NewFileReportWriter(dir, 10)
@@ -115,6 +120,11 @@ func TestWriteTopCPA_Ranking(t *testing.T) {
 		t.Fatalf("expected 4 lines, got %d", len(lines))
 	}
 
+	// Verify header has all 7 columns.
+	if lines[0] != "campaign_id,total_impressions,total_clicks,total_spend,total_conversions,CTR,CPA" {
+		t.Errorf("unexpected header: %s", lines[0])
+	}
+
 	// First data row should be "cheap" (lowest CPA).
 	if !strings.HasPrefix(lines[1], "cheap,") {
 		t.Errorf("expected first data row to be 'cheap', got %s", lines[1])
@@ -122,6 +132,40 @@ func TestWriteTopCPA_Ranking(t *testing.T) {
 	// Last data row should be "expensive" (highest CPA).
 	if !strings.HasPrefix(lines[3], "expensive,") {
 		t.Errorf("expected last data row to be 'expensive', got %s", lines[3])
+	}
+}
+
+func TestWriteTopCTR_CPANullForZeroConversions(t *testing.T) {
+	store := NewInMemoryMetricsStore()
+	store.Add("has_conv", 1000, 100, 500.00, 50) // CPA = 10.00
+	store.Add("no_conv", 1000, 200, 300.00, 0)   // CPA should be empty
+
+	dir := t.TempDir()
+	w := NewFileReportWriter(dir, 10)
+
+	if err := w.WriteReports(store); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(dir, "top10_ctr.csv"))
+	if err != nil {
+		t.Fatalf("read ctr file: %v", err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+	if len(lines) != 3 { // header + 2 data rows
+		t.Fatalf("expected 3 lines, got %d", len(lines))
+	}
+
+	// "no_conv" has higher CTR (0.2 vs 0.1) so appears first.
+	// Its CPA column (last field) should be empty.
+	if !strings.HasSuffix(lines[1], ",") {
+		t.Errorf("expected empty CPA for zero-conversion campaign, got %s", lines[1])
+	}
+
+	// "has_conv" should have CPA = 10.00.
+	if !strings.HasSuffix(lines[2], ",10.00") {
+		t.Errorf("expected CPA 10.00 for campaign with conversions, got %s", lines[2])
 	}
 }
 
