@@ -25,13 +25,17 @@ func (s *Service) Run(r io.Reader) error {
 	if err := s.processor.Process(r, store); err != nil {
 		return err
 	}
-	log.Printf("benchmark: processing phase completed in %s", time.Since(t0))
+	if Benchmark {
+		log.Printf("benchmark: processing phase completed in %s", time.Since(t0))
+	}
 
 	t1 := time.Now()
 	if err := s.writer.WriteReports(store); err != nil {
 		return err
 	}
-	log.Printf("benchmark: report writing phase completed in %s", time.Since(t1))
+	if Benchmark {
+		log.Printf("benchmark: report writing phase completed in %s", time.Since(t1))
+	}
 
 	return nil
 }

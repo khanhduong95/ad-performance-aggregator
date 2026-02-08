@@ -56,7 +56,9 @@ func (p *csvProcessor) Process(r io.Reader, store MetricsStore) error {
 		}
 	}
 
-	log.Printf("benchmark: parsed %d data rows", lineNum-1)
+	if Benchmark {
+		log.Printf("benchmark: parsed %d data rows", lineNum-1)
+	}
 	return nil
 }
 

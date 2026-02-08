@@ -36,14 +36,18 @@ func (w *fileReportWriter) WriteReports(store MetricsStore) error {
 	if err := writeMetricsFile(ctrPath, ctrHeader, ctrData, ctrRow); err != nil {
 		return err
 	}
-	log.Printf("benchmark: wrote %d campaigns to %s", len(ctrData), ctrPath)
+	if Benchmark {
+		log.Printf("benchmark: wrote %d campaigns to %s", len(ctrData), ctrPath)
+	}
 
 	cpaData := store.TopKByCPA(w.topK)
 	cpaPath := filepath.Join(w.outputDir, fmt.Sprintf("top%d_cpa.csv", w.topK))
 	if err := writeMetricsFile(cpaPath, cpaHeader, cpaData, cpaRow); err != nil {
 		return err
 	}
-	log.Printf("benchmark: wrote %d campaigns to %s", len(cpaData), cpaPath)
+	if Benchmark {
+		log.Printf("benchmark: wrote %d campaigns to %s", len(cpaData), cpaPath)
+	}
 
 	return nil
 }

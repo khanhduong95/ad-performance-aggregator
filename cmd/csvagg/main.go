@@ -13,7 +13,10 @@ func main() {
 	input := flag.String("input", "", "path to input CSV file (required)")
 	output := flag.String("output", "", "path to output directory (required)")
 	topK := flag.Int("topk", 10, "number of top campaigns to include in reports (default: 10)")
+	benchmark := flag.Bool("benchmark", false, "enable benchmark timing logs on stderr")
 	flag.Parse()
+
+	aggregator.Benchmark = *benchmark
 
 	if *input == "" || *output == "" {
 		fmt.Fprintln(os.Stderr, "usage: csvagg --input <csv_path> --output <output_dir> [--topk <number>]")
