@@ -4,7 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"strconv"
 )
 
@@ -13,14 +13,12 @@ var expectedHeader = []string{
 	"campaign_id", "impressions", "clicks", "spend", "conversions",
 }
 
-type csvProcessor struct {
-	benchmark bool
-}
+type csvProcessor struct{}
 
 // NewCSVProcessor returns a Processor that parses and aggregates
 // ad performance CSV data.
-func NewCSVProcessor(benchmark bool) Processor {
-	return &csvProcessor{benchmark: benchmark}
+func NewCSVProcessor() Processor {
+	return &csvProcessor{}
 }
 
 // Process streams the CSV from r line-by-line and accumulates
@@ -58,9 +56,7 @@ func (p *csvProcessor) Process(r io.Reader, store MetricsStore) error {
 		}
 	}
 
-	if p.benchmark {
-		log.Printf("benchmark: parsed %d data rows", lineNum-1)
-	}
+	slog.Debug("parsed csv input", "rows", lineNum-1)
 	return nil
 }
 

@@ -45,7 +45,7 @@ func TestService_Run(t *testing.T) {
 		},
 	}
 	writer := &fakeWriter{}
-	svc := NewService(proc, writer, false)
+	svc := NewService(proc, writer)
 
 	if err := svc.Run(strings.NewReader("")); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -62,7 +62,7 @@ func TestService_Run(t *testing.T) {
 func TestService_ProcessError(t *testing.T) {
 	proc := &fakeProcessor{err: errors.New("parse failed")}
 	writer := &fakeWriter{}
-	svc := NewService(proc, writer, false)
+	svc := NewService(proc, writer)
 
 	err := svc.Run(strings.NewReader(""))
 	if err == nil {
@@ -80,7 +80,7 @@ func TestService_WriterError(t *testing.T) {
 		},
 	}
 	writer := &fakeWriter{err: errors.New("disk full")}
-	svc := NewService(proc, writer, false)
+	svc := NewService(proc, writer)
 
 	err := svc.Run(strings.NewReader(""))
 	if err == nil {

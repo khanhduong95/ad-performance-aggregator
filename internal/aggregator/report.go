@@ -4,7 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -13,17 +13,16 @@ import (
 type fileReportWriter struct {
 	outputDir string
 	topK      int
-	benchmark bool
 }
 
 // NewFileReportWriter returns a ReportWriter that writes CSV reports
 // to the given directory. The topK parameter controls how many top campaigns
 // to include in each report (defaults to 10 if <= 0).
-func NewFileReportWriter(outputDir string, topK int, benchmark bool) ReportWriter {
+func NewFileReportWriter(outputDir string, topK int) ReportWriter {
 	if topK <= 0 {
 		topK = 10
 	}
-	return &fileReportWriter{outputDir: outputDir, topK: topK, benchmark: benchmark}
+	return &fileReportWriter{outputDir: outputDir, topK: topK}
 }
 
 // WriteReports produces top{K}_ctr.csv and top{K}_cpa.csv inside the output directory.
@@ -37,18 +36,14 @@ func (w *fileReportWriter) WriteReports(store MetricsStore) error {
 	if err := writeMetricsFile(ctrPath, ctrHeader, ctrData, ctrRow); err != nil {
 		return err
 	}
-	if w.benchmark {
-		log.Printf("benchmark: wrote %d campaigns to %s", len(ctrData), ctrPath)
-	}
+	slog.Debug("wrote report", "path", ctrPath, "campaigns", len(ctrData))
 
 	cpaData := store.TopKByCPA(w.topK)
 	cpaPath := filepath.Join(w.outputDir, fmt.Sprintf("top%d_cpa.csv", w.topK))
 	if err := writeMetricsFile(cpaPath, cpaHeader, cpaData, cpaRow); err != nil {
 		return err
 	}
-	if w.benchmark {
-		log.Printf("benchmark: wrote %d campaigns to %s", len(cpaData), cpaPath)
-	}
+	slog.Debug("wrote report", "path", cpaPath, "campaigns", len(cpaData))
 
 	return nil
 }

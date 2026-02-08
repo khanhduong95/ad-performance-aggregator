@@ -178,7 +178,7 @@ func TestInMemoryMetricsStore_SatisfiesInterface(t *testing.T) {
 
 	// Also verify via strings.NewReader round-trip with processor.
 	s := NewInMemoryMetricsStore()
-	p := NewCSVProcessor(false)
+	p := NewCSVProcessor()
 	input := "campaign_id,impressions,clicks,spend,conversions\ncamp1,100,10,50.00,5\n"
 	if err := p.Process(strings.NewReader(input), s); err != nil {
 		t.Fatalf("unexpected error: %v", err)

@@ -13,7 +13,7 @@ func TestFileReportWriter_WriteReports(t *testing.T) {
 	store.Add("camp2", 2000, 50, 200.00, 20)
 
 	dir := t.TempDir()
-	w := NewFileReportWriter(dir, 10, false)
+	w := NewFileReportWriter(dir, 10)
 
 	if err := w.WriteReports(store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -40,7 +40,7 @@ func TestWriteTopCTR_Ranking(t *testing.T) {
 	store.Add("mid", 1000, 50, 0, 0)
 
 	dir := t.TempDir()
-	w := NewFileReportWriter(dir, 10, false)
+	w := NewFileReportWriter(dir, 10)
 
 	if err := w.WriteReports(store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -72,7 +72,7 @@ func TestWriteTopCPA_ExcludesZeroConversions(t *testing.T) {
 	store.Add("no_conv", 0, 0, 200.00, 0)
 
 	dir := t.TempDir()
-	w := NewFileReportWriter(dir, 10, false)
+	w := NewFileReportWriter(dir, 10)
 
 	if err := w.WriteReports(store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -99,7 +99,7 @@ func TestWriteTopCPA_Ranking(t *testing.T) {
 	store.Add("mid", 0, 0, 500.00, 10)        // CPA = 50
 
 	dir := t.TempDir()
-	w := NewFileReportWriter(dir, 10, false)
+	w := NewFileReportWriter(dir, 10)
 
 	if err := w.WriteReports(store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -135,7 +135,7 @@ func TestConfigurableTopK(t *testing.T) {
 
 	dir := t.TempDir()
 	// Test with topK = 2, should only return top 2 campaigns.
-	w := NewFileReportWriter(dir, 2, false)
+	w := NewFileReportWriter(dir, 2)
 
 	if err := w.WriteReports(store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -165,7 +165,7 @@ func TestConfigurableTopK_FileNames(t *testing.T) {
 	store.Add("camp1", 1000, 100, 500.00, 10)
 
 	dir := t.TempDir()
-	w := NewFileReportWriter(dir, 5, false)
+	w := NewFileReportWriter(dir, 5)
 
 	if err := w.WriteReports(store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
