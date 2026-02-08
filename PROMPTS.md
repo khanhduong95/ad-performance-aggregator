@@ -74,3 +74,22 @@ Further refined to learn how to measure peak RSS and trim verbose package listin
 
 Further refined to align `go.mod` with the oldest supported Go version and
 Dockerfile with the latest stable.
+
+## 9. Cross-Check Output Format Against Requirements
+
+> Cross check with this requirement if there are any issues.
+> (Pasted the full FV-SEC001 requirements spec.)
+
+Found that both output CSV files (`top10_ctr.csv` and `top10_cpa.csv`) were
+missing columns. The spec requires all 7 columns in both files:
+`campaign_id, total_impressions, total_clicks, total_spend, total_conversions, CTR, CPA`.
+
+The CTR report only had 4 columns (`campaign_id, impressions, clicks, ctr`)
+and the CPA report only had 4 (`campaign_id, spend, conversions, cpa`).
+Column names also didn't match (e.g. `impressions` vs `total_impressions`,
+`ctr` vs `CTR`). CTR was formatted to 6 decimal places instead of the 4
+shown in the spec examples.
+
+Fixed by unifying both reports to use a single shared header and row
+formatter with all 7 columns, 4-decimal CTR, and empty CPA for
+zero-conversion campaigns. Updated tests and removed stale result files.
