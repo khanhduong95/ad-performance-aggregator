@@ -6,7 +6,7 @@ The tool aggregates metrics (impressions, clicks, spend, conversions) by campaig
 
 ## Setup
 
-**Prerequisites:** Go 1.24+
+**Prerequisites:** Go 1.21+
 
 ```bash
 # Clone the repository
