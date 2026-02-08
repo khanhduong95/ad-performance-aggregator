@@ -10,7 +10,7 @@ func TestCSVProcessor_BasicAggregation(t *testing.T) {
 camp1,1000,50,100.00,10
 camp1,500,25,50.00,5
 `
-	p := NewCSVProcessor()
+	p := NewCSVProcessor(false)
 	store := NewInMemoryMetricsStore()
 	if err := p.Process(strings.NewReader(input), store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -45,7 +45,7 @@ camp1,1000,50,100.00,10
 camp2,2000,100,200.00,20
 camp3,3000,150,300.00,30
 `
-	p := NewCSVProcessor()
+	p := NewCSVProcessor(false)
 	store := NewInMemoryMetricsStore()
 	if err := p.Process(strings.NewReader(input), store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -66,7 +66,7 @@ func TestCSVProcessor_MissingHeader(t *testing.T) {
 	input := `campaign_id,impressions,clicks
 camp1,1000,50
 `
-	p := NewCSVProcessor()
+	p := NewCSVProcessor(false)
 	store := NewInMemoryMetricsStore()
 	err := p.Process(strings.NewReader(input), store)
 	if err == nil {
@@ -78,7 +78,7 @@ func TestCSVProcessor_BadImpressions(t *testing.T) {
 	input := `campaign_id,impressions,clicks,spend,conversions
 camp1,not_a_number,50,100.00,10
 `
-	p := NewCSVProcessor()
+	p := NewCSVProcessor(false)
 	store := NewInMemoryMetricsStore()
 	err := p.Process(strings.NewReader(input), store)
 	if err == nil {
@@ -90,7 +90,7 @@ func TestCSVProcessor_EmptyCampaignID(t *testing.T) {
 	input := `campaign_id,impressions,clicks,spend,conversions
 ,1000,50,100.00,10
 `
-	p := NewCSVProcessor()
+	p := NewCSVProcessor(false)
 	store := NewInMemoryMetricsStore()
 	err := p.Process(strings.NewReader(input), store)
 	if err == nil {
@@ -100,7 +100,7 @@ func TestCSVProcessor_EmptyCampaignID(t *testing.T) {
 
 func TestCSVProcessor_HeaderOnly(t *testing.T) {
 	input := "campaign_id,impressions,clicks,spend,conversions\n"
-	p := NewCSVProcessor()
+	p := NewCSVProcessor(false)
 	store := NewInMemoryMetricsStore()
 	if err := p.Process(strings.NewReader(input), store); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -114,7 +114,7 @@ func TestCSVProcessor_DerivedMetrics(t *testing.T) {
 	input := `campaign_id,impressions,clicks,spend,conversions
 camp1,1000,100,500.00,50
 `
-	p := NewCSVProcessor()
+	p := NewCSVProcessor(false)
 	store := NewInMemoryMetricsStore()
 	if err := p.Process(strings.NewReader(input), store); err != nil {
 		t.Fatalf("unexpected error: %v", err)

@@ -16,21 +16,19 @@ func main() {
 	benchmark := flag.Bool("benchmark", false, "enable benchmark timing logs on stderr")
 	flag.Parse()
 
-	aggregator.Benchmark = *benchmark
-
 	if *input == "" || *output == "" {
 		fmt.Fprintln(os.Stderr, "usage: csvagg --input <csv_path> --output <output_dir> [--topk <number>]")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
-	if err := run(*input, *output, *topK); err != nil {
+	if err := run(*input, *output, *topK, *benchmark); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
 }
 
-func run(input, output string, topK int) error {
+func run(input, output string, topK int, benchmark bool) error {
 	f, err := os.Open(input)
 	if err != nil {
 		return fmt.Errorf("open input: %w", err)
@@ -41,8 +39,9 @@ func run(input, output string, topK int) error {
 	fmt.Fprintf(os.Stderr, "processing %s ...\n", input)
 
 	svc := aggregator.NewService(
-		aggregator.NewCSVProcessor(),
-		aggregator.NewFileReportWriter(output, topK),
+		aggregator.NewCSVProcessor(benchmark),
+		aggregator.NewFileReportWriter(output, topK, benchmark),
+		benchmark,
 	)
 
 	if err := svc.Run(f); err != nil {

@@ -13,16 +13,17 @@ import (
 type fileReportWriter struct {
 	outputDir string
 	topK      int
+	benchmark bool
 }
 
 // NewFileReportWriter returns a ReportWriter that writes CSV reports
 // to the given directory. The topK parameter controls how many top campaigns
 // to include in each report (defaults to 10 if <= 0).
-func NewFileReportWriter(outputDir string, topK int) ReportWriter {
+func NewFileReportWriter(outputDir string, topK int, benchmark bool) ReportWriter {
 	if topK <= 0 {
 		topK = 10
 	}
-	return &fileReportWriter{outputDir: outputDir, topK: topK}
+	return &fileReportWriter{outputDir: outputDir, topK: topK, benchmark: benchmark}
 }
 
 // WriteReports produces top{K}_ctr.csv and top{K}_cpa.csv inside the output directory.
@@ -36,7 +37,7 @@ func (w *fileReportWriter) WriteReports(store MetricsStore) error {
 	if err := writeMetricsFile(ctrPath, ctrHeader, ctrData, ctrRow); err != nil {
 		return err
 	}
-	if Benchmark {
+	if w.benchmark {
 		log.Printf("benchmark: wrote %d campaigns to %s", len(ctrData), ctrPath)
 	}
 
@@ -45,7 +46,7 @@ func (w *fileReportWriter) WriteReports(store MetricsStore) error {
 	if err := writeMetricsFile(cpaPath, cpaHeader, cpaData, cpaRow); err != nil {
 		return err
 	}
-	if Benchmark {
+	if w.benchmark {
 		log.Printf("benchmark: wrote %d campaigns to %s", len(cpaData), cpaPath)
 	}
 

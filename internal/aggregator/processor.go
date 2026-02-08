@@ -13,12 +13,14 @@ var expectedHeader = []string{
 	"campaign_id", "impressions", "clicks", "spend", "conversions",
 }
 
-type csvProcessor struct{}
+type csvProcessor struct {
+	benchmark bool
+}
 
 // NewCSVProcessor returns a Processor that parses and aggregates
 // ad performance CSV data.
-func NewCSVProcessor() Processor {
-	return &csvProcessor{}
+func NewCSVProcessor(benchmark bool) Processor {
+	return &csvProcessor{benchmark: benchmark}
 }
 
 // Process streams the CSV from r line-by-line and accumulates
@@ -56,7 +58,7 @@ func (p *csvProcessor) Process(r io.Reader, store MetricsStore) error {
 		}
 	}
 
-	if Benchmark {
+	if p.benchmark {
 		log.Printf("benchmark: parsed %d data rows", lineNum-1)
 	}
 	return nil
