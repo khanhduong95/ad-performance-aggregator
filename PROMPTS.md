@@ -51,7 +51,7 @@ Further refined to trim the interface surface and rename implementations.
 
 ## 5. Create Dockerfile
 
-> Create Dockerfile for application.
+> Create Dockerfile for application
 
 ## 6. Add Benchmark Logs
 
